@@ -404,3 +404,16 @@ func main() {
 	)
 }
 ```
+
+---
+
+Next steps:
+- Unit tests
+- More chords / scales
+- WAV / MP3 encoding
+- Instruments presets (guitar, flute, percussions)
+- Audio FX (reverbs, delays, etc.)
+- Substractive synthesis
+- Gestion stereo/mono
+- Live coding (UDP protocol + server)
+- Load audio from files (get a `dsp.Signal` from WAV file)
