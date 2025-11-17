@@ -1,6 +1,6 @@
-# Making music in Go
+# POC: Making music in Go
 
-In order to produce music with our Go code, we need the following:
+In order to produce music in pure Go code, we need the following:
 - An oscillator (like a sine wave that will produce sound at a certain frequency)
 - A way to turn the continuous oscillator signal into audio frames
 - A way to interpret these audio frames and play them on a speaker
@@ -411,9 +411,9 @@ Next steps:
 - Unit tests
 - More chords / scales
 - WAV / MP3 encoding
+- Load audio from files (get a `dsp.Signal` from WAV file)
 - Instruments presets (guitar, flute, percussions)
 - Audio FX (reverbs, delays, etc.)
 - Substractive synthesis
-- Gestion stereo/mono
-- Live coding (UDP protocol + server)
-- Load audio from files (get a `dsp.Signal` from WAV file)
+- Handle stereo/mono
+- Live coding (scripting language + protocol + audio server)
