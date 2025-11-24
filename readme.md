@@ -430,9 +430,9 @@ Additionally, let's test our `Constant` signal for good measure.
 
 This gives us the following code (in `pkg/signal/signal_test.go`):
 ```go
-func TestSignal(t *testing.T) {
-	const maxDiff = 0.00000001
+const maxDiff = 0.00000001
 
+func TestSignal(t *testing.T) {
 	tests := []struct {
 		s    Signal
 		want map[time.Duration]float64
@@ -455,6 +455,16 @@ func TestSignal(t *testing.T) {
 				time.Second:            0,
 			},
 		},
+		{
+			s: Sine(Constant(2.0)),
+			want: map[time.Duration]float64{
+				0:                      0,
+				125 * time.Millisecond: 1,
+				250 * time.Millisecond: 0,
+				375 * time.Millisecond: -1,
+				500 * time.Millisecond: 0,
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -466,6 +476,27 @@ func TestSignal(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+```
+
+We've now added some data-driven tests for our signals.
+
+But wouldn't it be nice if we could also test the behavior of any oscillator
+without worrying about the special values we should be getting?
+
+Let's implement a simple behavior-driven test where we will be
+checking that the value of our signal at t0 and t0+period are equal:
+```go
+func TestOscillator(t *testing.T) {
+	s := Sine(Constant(1000))
+	periodDuration := time.Second / 1000
+	for x := time.Duration(0); x < time.Second; x += time.Millisecond {
+		a := s.At(x)
+		b := s.At(x + periodDuration)
+		if math.Abs(a-b) > maxDiff {
+			t.Fatalf("s(%s)=%f but s(%s+%s)=%f", x, a, x, periodDuration, b)
+		}
 	}
 }
 ```
