@@ -29,7 +29,7 @@ To extract frames from a continuous signal, we need:
 - Where to begin and end our sampling within the signal (offset and length)
 
 But... what is a signal?
-Simply, a signal is a function that returns a value (between -1 and 1) that fluctuates over time.
+Simply, a signal is a function that returns a value that fluctuates over time.
 Like so:
 
 ```go
@@ -402,6 +402,71 @@ func main() {
 		dsp.F(bpm.T(4), dsp.Amplify(chord3, dsp.Sequence(dsp.Lerp(0, 1, bpm.T(2)), dsp.Lerp(1, 0, bpm.T(2))))),
 		dsp.F(bpm.T(4), dsp.Amplify(chord4, dsp.Sequence(dsp.Lerp(0, 1, bpm.T(2)), dsp.Lerp(1, 0, bpm.T(2))))),
 	)
+}
+```
+
+Alright, now we have a basic working demo.
+
+But some bits of our code are very mathematical, and we want to be confident that we don't
+break those later on. For example, our sine oscillator is fairly straightforward but
+does it work exactly as intended?
+
+In order to save ourselves some headaches in the future, and to be confident that our
+code works properly, we'll write a simple test that checks the value of a given signal at different moments.
+For example, we know that a sine wave oscillating at 1 Hertz will have the following values:
+- 0s: 0
+- 0.25s: 1
+- 0.5s: 0
+- 0.75s: -1
+- 1s: 0
+
+So we can simply just take a Sine wave at 1 Hertz and check that we get the right return values according to
+what we just described above.
+But... There's a catch, due to how floating-point numbers are implemented in Go (and more generally in computers),
+we can't just compare the values with the usual `==` sign. Because they will never be exactly equal.
+Instead, we need to use a confidence interval (for example: 0.00000001) and then ensure that the value we got
+is within this confidence interval.
+Additionally, let's test our `Constant` signal for good measure.
+
+This gives us the following code (in `pkg/signal/signal_test.go`):
+```go
+func TestSignal(t *testing.T) {
+	const maxDiff = 0.00000001
+
+	tests := []struct {
+		s    Signal
+		want map[time.Duration]float64
+	}{
+		{
+			s: Constant(420),
+			want: map[time.Duration]float64{
+				0:                     420,
+				69 * time.Millisecond: 420,
+				time.Hour:             420,
+			},
+		},
+		{
+			s: Sine(Constant(1.0)),
+			want: map[time.Duration]float64{
+				0:                      0,
+				250 * time.Millisecond: 1,
+				500 * time.Millisecond: 0,
+				750 * time.Millisecond: -1,
+				time.Second:            0,
+			},
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			for x, y := range test.want {
+				got := test.s.At(x)
+				if math.Abs(got-y) > maxDiff {
+					t.Fatalf("got %f not %f (at %s)", got, y, x)
+				}
+			}
+		})
+	}
 }
 ```
 
